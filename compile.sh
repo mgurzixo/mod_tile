@@ -26,7 +26,7 @@ sudo apt --no-install-recommends --yes install \
 
 # Download, Build, Test & Install `mod_tile`
 export CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
-export TMP=/u2/tmp
+export TMP=/u/tmp
 rm -rf $TMP/mod_tile_src $TMP/mod_tile_build
 mkdir $TMP/mod_tile_src $TMP/mod_tile_build
 cd $TMP/mod_tile_src
