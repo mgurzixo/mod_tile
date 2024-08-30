@@ -15,13 +15,16 @@
  * along with this program; If not, see http://www.gnu.org/licenses/.
  */
 
-#include <boost/optional.hpp>
 #include <mapnik/datasource.hpp>
 #include <mapnik/datasource_cache.hpp>
 #include <mapnik/layer.hpp>
 #include <mapnik/map.hpp>
 #include <mapnik/params.hpp>
 #include <mapnik/version.hpp>
+
+#if MAPNIK_MAJOR_VERSION < 4
+#include <boost/optional.hpp>
+#endif
 
 #include "g_logger.h"
 #include "parameterize_style.hpp"
@@ -65,7 +68,7 @@ static void parameterize_map_language(mapnik::Map &m, char *parameter)
 		mapnik::parameters params = l.datasource()->params();
 
 		if (params.find("table") != params.end()) {
-			boost::optional<std::string> table = params.get<std::string>("table");
+			auto table = params.get<std::string>("table");
 
 			if (table && table->find(",name") != std::string::npos) {
 				std::string str = *table;

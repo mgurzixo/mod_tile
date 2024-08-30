@@ -17,6 +17,9 @@
 
 #define _GNU_SOURCE
 
+#include <sys/un.h>
+#include <unistd.h>
+
 #include "config.h"
 #include "g_logger.h"
 #include "render_config.h"
@@ -211,7 +214,7 @@ void process_map_sections(const char *config_file_name, xmlconfigitem *maps_dest
 		const char *section = iniparser_getsecname(ini, section_num);
 
 		if (strncmp(section, "renderd", 7) && strcmp(section, "mapnik")) { // this is a map config section
-			char *ini_type_copy, *ini_type_part;
+			char *ini_type_copy, *ini_type_part, *ini_type_context;
 			const char *ini_type;
 			int ini_type_part_maxlen = 64, ini_type_part_num = 0;
 
@@ -272,7 +275,9 @@ void process_map_sections(const char *config_file_name, xmlconfigitem *maps_dest
 			process_config_string(ini, section, "type", &ini_type, "png image/png png256", INILINE_MAX);
 			ini_type_copy = strndup(ini_type, INILINE_MAX);
 
-			while ((ini_type_part = strtok_r(ini_type_copy, " ", &ini_type_copy))) {
+			for (ini_type_part = strtok_r(ini_type_copy, " ", &ini_type_context);
+					ini_type_part;
+					ini_type_part = strtok_r(NULL, " ", &ini_type_context)) {
 				switch (ini_type_part_num) {
 					case 0:
 						copy_string(ini_type_part, &maps_dest[map_section_num].file_extension, ini_type_part_maxlen);
@@ -312,6 +317,7 @@ void process_map_sections(const char *config_file_name, xmlconfigitem *maps_dest
 			 */
 			maps_dest[map_section_num].num_threads = num_threads;
 
+			free(ini_type_copy);
 			free(ini_type_part);
 			free((void *)ini_type);
 		}
@@ -361,6 +367,7 @@ void process_mapnik_section(const char *config_file_name, renderd_config *config
 void process_renderd_sections(const char *config_file_name, renderd_config *configs_dest)
 {
 	int renderd_section_num = -1;
+	int renderd_socketname_maxlen = sizeof(((struct sockaddr_un *)0)->sun_path);
 
 	dictionary *ini = iniparser_load(config_file_name);
 
@@ -397,6 +404,11 @@ void process_renderd_sections(const char *config_file_name, renderd_config *conf
 				exit(7);
 			}
 
+			if (configs_dest[renderd_section_num].name != NULL) {
+				g_logger(G_LOG_LEVEL_CRITICAL, "Duplicate renderd config section names for section %i: %s & %s", renderd_section_num, configs_dest[renderd_section_num].name, section);
+				exit(7);
+			}
+
 			copy_string(section, &configs_dest[renderd_section_num].name, renderd_strlen + 2);
 
 			process_config_int(ini, section, "ipport", &configs_dest[renderd_section_num].ipport, 0);
@@ -409,6 +421,11 @@ void process_renderd_sections(const char *config_file_name, renderd_config *conf
 
 			if (configs_dest[renderd_section_num].num_threads == -1) {
 				configs_dest[renderd_section_num].num_threads = sysconf(_SC_NPROCESSORS_ONLN);
+			}
+
+			if (strnlen(configs_dest[renderd_section_num].socketname, PATH_MAX) >= renderd_socketname_maxlen) {
+				g_logger(G_LOG_LEVEL_CRITICAL, "Specified socketname (%s) exceeds maximum allowed length of %i.", configs_dest[renderd_section_num].socketname, renderd_socketname_maxlen);
+				exit(7);
 			}
 		}
 	}

@@ -22,12 +22,11 @@ jobs:
         image:
           - "debian:11"
           - "debian:12"
-          - "fedora:38"
           - "fedora:39"
+          - "fedora:40"
           - "opensuse/leap:15"
-          - "quay.io/centos/centos:stream8"
           - "quay.io/centos/centos:stream9"
-          - "ubuntu:20.04"
+          - "ubuntu:22.04"
         on_default_branch:
           - ${{ contains(github.ref, 'master') || contains(github.ref, 'develop') || contains(github.ref, 'CI') }}
         include:
@@ -43,16 +42,16 @@ jobs:
             build_system: CMake
             compiler: GNU
             experimental: true
-          - image: "ubuntu:22.04"
+          - image: "ubuntu:24.04"
             build_system: Autotools
             compiler: GNU
-          - image: "ubuntu:22.04"
+          - image: "ubuntu:24.04"
             build_system: Autotools
             compiler: LLVM
-          - image: "ubuntu:22.04"
+          - image: "ubuntu:24.04"
             build_system: CMake
             compiler: GNU
-          - image: "ubuntu:22.04"
+          - image: "ubuntu:24.04"
             build_system: CMake
             compiler: LLVM
         exclude:
@@ -85,7 +84,6 @@ jobs:
       - name: Process & Report `mod_tile` coverage results
         uses: ./.github/actions/coverage
         if: |
-          matrix.build_system == 'CMake' &&
           matrix.compiler != 'LLVM' &&
           !startsWith(matrix.image, 'opensuse/') &&
           !matrix.experimental
@@ -109,7 +107,7 @@ jobs:
       matrix:
         image:
           - "debian:12"
-          - "ubuntu:22.04"
+          - "ubuntu:24.04"
         build_system:
           - CMake
         compiler:
@@ -139,7 +137,6 @@ jobs:
 
       - name: Process & Report `mod_tile` coverage results
         uses: ./.github/actions/coverage
-        if: matrix.build_system == 'CMake'
 
       - name: Package `mod_tile`
         uses: ./.github/actions/cmake/package
@@ -155,7 +152,6 @@ jobs:
       INSTALL_PREFIX: /usr/local
       INSTALL_RUNSTATEDIR: /var/run
       LDFLAGS: -undefined dynamic_lookup
-      TEST_PARALLEL_LEVEL: 1
     name: >-
       ${{ matrix.os }}
       (${{ matrix.build_system }})
@@ -174,9 +170,6 @@ jobs:
         on_default_branch:
           - ${{ contains(github.ref, 'master') || contains(github.ref, 'develop') || contains(github.ref, 'CI') }}
         include:
-          - os: macos-14
-            build_system: Autotools
-            compiler: LLVM
           - os: macos-14
             build_system: CMake
             compiler: LLVM
@@ -204,9 +197,9 @@ jobs:
       - name: Process & Report `mod_tile` coverage results
         uses: ./.github/actions/coverage
         with:
-          genhtml-extra-options: --ignore-errors inconsistent --ignore-errors unmapped
-          lcov-extra-options: --ignore-errors gcov --ignore-errors inconsistent
-        if: matrix.build_system == 'CMake'
+          genhtml-extra-options: --keep-going --ignore-errors count,inconsistent,range
+          lcov-extra-options: --keep-going --ignore-errors count,inconsistent,range
+        if: matrix.os != 'macos-12'
 
       - name: Package `mod_tile`
         uses: ./.github/actions/cmake/package
@@ -256,7 +249,7 @@ jobs:
           echo "TEST_PARALLEL_LEVEL=$(nproc)" >> ${GITHUB_ENV}
 
       - name: Provision VM
-        uses: hummeltech/freebsd-vagrant-action@v1.4
+        uses: hummeltech/freebsd-vagrant-action@v2
         with:
           box: generic/${{ matrix.box_generic }}
           cpus: ${{ env.BUILD_PARALLEL_LEVEL }}

@@ -173,6 +173,8 @@ void request_exit(void)
 	// Any write to the exit pipe will trigger a graceful exit
 	char c = 0;
 
+	g_logger(G_LOG_LEVEL_INFO, "Sending exit request");
+
 	if (write(exit_pipe_fd, &c, sizeof(c)) < 0) {
 		g_logger(G_LOG_LEVEL_ERROR, "Failed to write to the exit pipe: %s", strerror(errno));
 	}
@@ -212,10 +214,10 @@ void process_loop(int listen_fd)
 		num = poll(pfd, num_cslots + PFD_SPECIAL_COUNT, -1);
 
 		if (num == -1) {
-			g_logger(G_LOG_LEVEL_ERROR, "poll(): %s", strerror(errno));
+			g_logger(G_LOG_LEVEL_DEBUG, "poll(): %s", strerror(errno));
 		} else if (num) {
 			if (pfd[PFD_EXIT_PIPE].revents & POLLIN) {
-				// A render thread wants us to exit
+				g_logger(G_LOG_LEVEL_INFO, "Received exit request, exiting process_loop");
 				break;
 			}
 
@@ -492,6 +494,8 @@ int server_socket_init(renderd_config *sConfig)
 	int fd;
 
 	if (sConfig->ipport > 0) {
+		const int enable = 1;
+
 		g_logger(G_LOG_LEVEL_INFO, "Initialising TCP/IP server socket on %s:%i",
 			 sConfig->iphostname, sConfig->ipport);
 		fd = socket(PF_INET6, SOCK_STREAM, 0);
@@ -499,6 +503,18 @@ int server_socket_init(renderd_config *sConfig)
 		if (fd < 0) {
 			g_logger(G_LOG_LEVEL_CRITICAL, "failed to create IP socket");
 			exit(2);
+		}
+
+		if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable)) < 0) {
+			g_logger(G_LOG_LEVEL_CRITICAL, "setsockopt SO_REUSEADDR failed for: %s:%i",
+				 sConfig->iphostname, sConfig->ipport);
+			exit(3);
+		}
+
+		if (setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &enable, sizeof(enable)) < 0) {
+			g_logger(G_LOG_LEVEL_CRITICAL, "setsockopt SO_REUSEPORT failed for: %s:%i",
+				 sConfig->iphostname, sConfig->ipport);
+			exit(3);
 		}
 
 		bzero(&addrI, sizeof(addrI));
@@ -893,6 +909,8 @@ int main(int argc, char **argv)
 	process_loop(fd);
 
 	unlink(config.socketname);
+	free_map_sections(maps);
+	free_renderd_sections(config_slaves);
 	close(fd);
 	return 0;
 }

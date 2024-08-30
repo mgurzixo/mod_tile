@@ -20,13 +20,12 @@
 
 #include <cstdio>
 #include <glib.h>
-#include <iostream>
-#include <limits.h>
 #include <mapnik/version.hpp>
 #include <math.h>
 #include <pthread.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include <string>
 #include <strings.h>
 #include <sys/stat.h>
@@ -36,8 +35,14 @@
 #include <tuple>
 #include <unistd.h>
 
+#if MAPNIK_MAJOR_VERSION >= 4
+#include <mapnik/geometry/box2d.hpp>
+#else
+#include <mapnik/box2d.hpp>
+#endif
+
 #include "catch/catch.hpp"
-#include "catch/catch_test_common.hpp"
+#include "catch_test_common.hpp"
 #include "config.h"
 #include "g_logger.h"
 #include "gen_tile.h"
@@ -48,13 +53,6 @@
 #include "renderd.h"
 #include "request_queue.h"
 #include "store.h"
-#include "string.h"
-
-#if MAPNIK_MAJOR_VERSION >= 4
-#include <mapnik/geometry/box2d.hpp>
-#else
-#include <mapnik/box2d.hpp>
-#endif
 
 #define NO_QUEUE_REQUESTS 9
 #define NO_TEST_REPEATS 100
@@ -1208,8 +1206,31 @@ TEST_CASE("rados storage-backend", "RADOS Tile storage backend")
 	}
 }
 
+TEST_CASE("ro_composite storage-backend", "RO Composite Tile storage backend")
+{
+	int found;
+	std::string err_log_lines, out_log_lines;
+	struct storage_backend *store = NULL;
+
+#ifndef HAVE_CAIRO
+	SECTION("storage/initialise", "should return NULL") {
+		start_capture();
+		REQUIRE(init_storage_backend("composite:{") == NULL);
+		std::tie(err_log_lines, out_log_lines) = end_capture();
+
+		found = err_log_lines.find("init_storage_ro_coposite: Support for compositing storage has not been compiled into this program");
+		REQUIRE(found > -1);
+	}
+#endif
+}
+
 TEST_CASE("ro_http_proxy storage-backend", "RO HTTP Proxy Tile storage backend")
 {
+	int found;
+	std::string err_log_lines, out_log_lines;
+	struct storage_backend *store = NULL;
+
+#ifdef HAVE_LIBCURL
 	SECTION("storage/initialise", "should return 1") {
 		struct storage_backend *store = NULL;
 
@@ -1218,6 +1239,16 @@ TEST_CASE("ro_http_proxy storage-backend", "RO HTTP Proxy Tile storage backend")
 
 		store->close_storage(store);
 	}
+#else
+	SECTION("storage/initialise", "should return NULL") {
+		start_capture();
+		REQUIRE(init_storage_backend("ro_http_proxy://") == NULL);
+		std::tie(err_log_lines, out_log_lines) = end_capture();
+
+		found = err_log_lines.find("init_storage_ro_http_proxy: Support for curl and therefore the http proxy storage has not been compiled into this program");
+		REQUIRE(found > -1);
+	}
+#endif
 }
 
 TEST_CASE("projections", "Test projections")

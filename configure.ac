@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 # Define mod_tile version number
-m4_define([mod_tile_version], [0.7.1])
+m4_define([mod_tile_version], [0.8.0])
 
 AC_PREREQ([2.61])
 AX_CONFIG_NICE
@@ -16,9 +16,10 @@ AC_CONFIG_HEADERS([includes/config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
 # Checks for programs.
-AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_CC_C99
+AC_PROG_CXX
+AC_PROG_RANLIB
 
 dnl Find C++ compiler
 AC_CHECK_PROG(HAVE_CXX, $CXX, yes, no)

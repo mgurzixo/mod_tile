@@ -28,12 +28,7 @@ sudo zypper --non-interactive install \
   gdal \
   glib2-devel \
   harfbuzz-devel \
-  libboost_atomic-devel \
-  libboost_filesystem-devel \
-  libboost_headers-devel \
-  libboost_program_options-devel \
   libboost_regex-devel \
-  libboost_system-devel \
   libcurl-devel \
   libicu-devel \
   libiniparser-devel \
@@ -58,10 +53,10 @@ git clone --depth 1 https://github.com/openstreetmap/mod_tile.git .
 cd /tmp/mod_tile_build
 cmake -B . -S /tmp/mod_tile_src \
   -DCMAKE_BUILD_TYPE:STRING=Release \
-  -DCMAKE_INSTALL_LOCALSTATEDIR=/var \
-  -DCMAKE_INSTALL_PREFIX=/usr \
-  -DCMAKE_INSTALL_RUNSTATEDIR=/run \
-  -DCMAKE_INSTALL_SYSCONFDIR=/etc \
+  -DCMAKE_INSTALL_LOCALSTATEDIR:PATH=/var \
+  -DCMAKE_INSTALL_PREFIX:PATH=/usr \
+  -DCMAKE_INSTALL_RUNSTATEDIR:PATH=/run \
+  -DCMAKE_INSTALL_SYSCONFDIR:PATH=/etc \
   -DENABLE_TESTS:BOOL=ON
 cmake --build .
 ctest

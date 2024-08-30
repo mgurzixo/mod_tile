@@ -16,18 +16,24 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 project(mod_tile
   DESCRIPTION "Renders map tiles with Mapnik and serves them using Apache HTTP Server"
   HOMEPAGE_URL "https://github.com/openstreetmap/mod_tile"
-  VERSION 0.7.1
+  VERSION 0.8.0
 )
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 11 CACHE STRING "Sets the C++ standard.")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
+set(CMAKE_INSTALL_MODULESDIR CACHE PATH "Apache HTTP Server module installation directory")
 set(ENABLE_MAN ON CACHE BOOL "Build man pages")
 set(ENABLE_TESTS OFF CACHE BOOL "Build test suite")
-set(CMAKE_INSTALL_MODULESDIR CACHE PATH "Apache HTTP Server module installation directory")
+set(USE_CAIRO ON CACHE BOOL "Add cairo support if available (for `store_ro_composite.c` backend)")
+set(USE_CURL ON CACHE BOOL "Add curl support if available (for `store_ro_http_proxy.c` backend)")
+set(USE_MEMCACHED ON CACHE BOOL "Add memcached support if available (for `store_memcached.c` backend)")
+set(USE_RADOS ON CACHE BOOL "Add rados support if available (for `store_rados.c` backend)")
+set(MALLOC_LIB "libc" CACHE STRING "Memory Management Library for `renderd`")
+set_property(CACHE MALLOC_LIB PROPERTY STRINGS "libc" "jemalloc" "mimalloc" "tcmalloc")
 
 #-----------------------------------------------------------------------------
 #
@@ -38,21 +44,30 @@ set(CMAKE_INSTALL_MODULESDIR CACHE PATH "Apache HTTP Server module installation 
 include(GNUInstallDirs)
 
 # Packages
-find_package(CURL)
 find_package(ICU REQUIRED uc)
 find_package(Threads REQUIRED)
 
 find_package(APR REQUIRED)
-find_package(CAIRO REQUIRED)
 find_package(GLIB 2.50 REQUIRED)
 find_package(HTTPD 2.4 REQUIRED)
 find_package(INIPARSER REQUIRED)
 find_package(LIBMAPNIK 3 REQUIRED)
-find_package(LIBMEMCACHED)
-find_package(LIBRADOS)
 
 if(LIBMAPNIK_VERSION VERSION_GREATER_EQUAL 4)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
+endif()
+
+if(USE_CURL)
+  find_package(CURL)
+endif()
+if(USE_CAIRO)
+  find_package(CAIRO)
+endif()
+if(USE_MEMCACHED)
+  find_package(LIBMEMCACHED)
+endif()
+if(USE_RADOS)
+  find_package(LIBRADOS)
 endif()
 
 # Programs
@@ -75,6 +90,20 @@ include(CheckLibraryExists)
 if(NOT HAVE_POW)
   check_library_exists(m pow "" HAVE_LIB_M)
   find_library(MATH_LIBRARY m REQUIRED)
+endif()
+
+if(NOT MALLOC_LIB STREQUAL "libc")
+  message(STATUS "Using '${MALLOC_LIB}' for memory managment")
+  if(MALLOC_LIB STREQUAL "jemalloc")
+    # jemalloc (http://jemalloc.net)
+    find_library(MALLOC_LIBRARY jemalloc REQUIRED)
+  elseif(MALLOC_LIB STREQUAL "mimalloc")
+    # mimalloc (https://github.com/microsoft/mimalloc)
+    find_library(MALLOC_LIBRARY mimalloc REQUIRED)
+  elseif(MALLOC_LIB STREQUAL "tcmalloc")
+    # tcmalloc (https://github.com/google/tcmalloc)
+    find_library(MALLOC_LIBRARY tcmalloc REQUIRED)
+  endif()
 endif()
 
 #-----------------------------------------------------------------------------

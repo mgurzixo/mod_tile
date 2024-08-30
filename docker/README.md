@@ -5,8 +5,6 @@ For your convenience, we have provided a Docker-based building and testing metho
 ### The following distributions are currently supported:
 
 - archlinux _(Arch Linux)_ [[Dockerfile](/docker/archlinux/Dockerfile)]
-- centos-7 _(CentOS 7)_ [[Dockerfile](/docker/centos/7/Dockerfile)]
-- centos-stream-8 _(CentOS Stream 8)_ [[Dockerfile](/docker/centos/stream/Dockerfile)]
 - centos-stream-9 _(CentOS Stream 9)_ [[Dockerfile](/docker/centos/stream/Dockerfile)]
 - debian-10 _(Debian 10)_ [[Dockerfile](/docker/debian/Dockerfile)]
 - debian-11 _(Debian 11)_ [[Dockerfile](/docker/debian/Dockerfile)]
@@ -18,11 +16,13 @@ For your convenience, we have provided a Docker-based building and testing metho
 - fedora-37 _(Fedora 37)_ [[Dockerfile](/docker/fedora/Dockerfile)]
 - fedora-38 _(Fedora 38)_ [[Dockerfile](/docker/fedora/Dockerfile)]
 - fedora-39 _(Fedora 39)_ [[Dockerfile](/docker/fedora/Dockerfile)]
+- fedora-40 _(Fedora 40)_ [[Dockerfile](/docker/fedora/Dockerfile)]
 - fedora-rawhide _(Fedora Rawhide)_ [[Dockerfile](/docker/fedora/Dockerfile)]
 - opensuse-leap-15 _(openSUSE Leap 15)_ [[Dockerfile](/docker/opensuse/Dockerfile)]
 - opensuse-tumbleweed _(openSUSE Tumbleweed)_ [[Dockerfile](/docker/opensuse/Dockerfile)]
 - ubuntu-20.04 _(Ubuntu 20.04)_ [[Dockerfile](/docker/ubuntu/Dockerfile)]
 - ubuntu-22.04 _(Ubuntu 22.04)_ [[Dockerfile](/docker/ubuntu/Dockerfile)]
+- ubuntu-24.04 _(Ubuntu 24.04)_ [[Dockerfile](/docker/ubuntu/Dockerfile)]
 - ubuntu-devel _(Ubuntu Devel)_ [[Dockerfile](/docker/ubuntu/Dockerfile)]
 
 ### Requirements:
